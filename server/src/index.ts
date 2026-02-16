@@ -53,9 +53,11 @@ app.get(
         res.json({
             id: req.user.id,
             role: req.user.role,
+            name: req.user.name,   // 👈 add this
         });
     }
 );
+
 app.post("/api/auth/logout", (req, res) => {
     res.clearCookie("token");
     res.json({ message: "Logged out" });

@@ -29,6 +29,7 @@ export default function Signin() {
 
         try {
             const user = await signin(formData.email, formData.password);
+            console.log(user);
 
             if (user?.role === "admin") {
                 router.push("/dashboard/admin");

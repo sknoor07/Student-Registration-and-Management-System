@@ -30,9 +30,9 @@ export const signup = async (req: Request, res: Response) => {
 
         // 4️⃣ Generate JWT
         const token = jwt.sign(
-            { id: user.id, role: user.role },
+            { id: user.id, role: user.role, name: user.name },
             process.env.JWT_SECRET as string,
-            { expiresIn: "10d" }
+            { expiresIn: "1d" }
         );
 
         // 5️⃣ Send JWT in httpOnly cookie
@@ -78,7 +78,7 @@ export const signin = async (req: Request, res: Response) => {
         }
 
         const token = jwt.sign(
-            { id: user.id, role: user.role },
+            { id: user.id, role: user.role, name: user.name },
             process.env.JWT_SECRET as string,
             { expiresIn: "1d" }
         );
