@@ -13,11 +13,12 @@ import api from "@/lib/axios";
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  name: string;
   refreshUser: () => Promise<void>;
   signin: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
 }
+
 
 const AuthContext = createContext<AuthContextType | undefined>(
   undefined
@@ -71,8 +72,9 @@ export function AuthProvider({
 
   return (
     <AuthContext.Provider
-      value={{ user, loading, refreshUser, signin, logout }}
+      value={{ user, loading, refreshUser, signin, logout, setUser }}
     >
+
       {children}
     </AuthContext.Provider>
   );
