@@ -1,0 +1,105 @@
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog"
+
+const ActionComponent = () => {
+    return (
+        <Dialog open={open} onOpenChange={setOpen}>
+                <DialogContent className="bg-gray-900 border border-gray-700 text-white rounded-2xl shadow-2xl max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl font-semibold">
+                            {editing ? "Edit Result" : "Add Result"}
+                        </DialogTitle>
+                    </DialogHeader>
+
+                    <div className="flex flex-col gap-5 mt-4">
+
+                        {/* Student Select */}
+                        <div className="space-y-2">
+                            <label className="text-sm text-gray-400">Student</label>
+                            <Select
+                                value={form.student_id}
+                                onValueChange={(val) =>
+                                    setForm({ ...form, student_id: val })
+                                }
+                            >
+                                <SelectTrigger className="bg-gray-800 border-gray-700 focus:ring-indigo-500">
+                                    <SelectValue placeholder="Select Student" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-gray-900 border-gray-700 text-white">
+                                    {students.map((s) => (
+                                        <SelectItem key={s.id} value={String(s.id)}>
+                                            {s.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Course Select */}
+                        <div className="space-y-2">
+                            <label className="text-sm text-gray-400">Course</label>
+                            <Select
+                                value={form.course_id}
+                                onValueChange={(val) =>
+                                    setForm({ ...form, course_id: val })
+                                }
+                            >
+                                <SelectTrigger className="bg-gray-800 border-gray-700 focus:ring-indigo-500">
+                                    <SelectValue placeholder="Select Course" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-gray-900 border-gray-700 text-white">
+                                    {courses.map((c) => (
+                                        <SelectItem key={c.id} value={String(c.id)}>
+                                            {c.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Marks */}
+                        <div className="space-y-2">
+                            <label className="text-sm text-gray-400">Marks</label>
+                            <Input
+                                type="number"
+                                placeholder="Enter marks"
+                                className="bg-gray-800 border-gray-700 focus-visible:ring-indigo-500"
+                                value={form.marks}
+                                onChange={(e) =>
+                                    setForm({ ...form, marks: e.target.value })
+                                }
+                            />
+                        </div>
+
+                        {/* Grade */}
+                        <div className="space-y-2">
+                            <label className="text-sm text-gray-400">Grade</label>
+                            <Input
+                                type="text"
+                                placeholder="e.g. A, B+"
+                                className="bg-gray-800 border-gray-700 focus-visible:ring-indigo-500"
+                                value={form.grade}
+                                onChange={(e) =>
+                                    setForm({ ...form, grade: e.target.value })
+                                }
+                            />
+                        </div>
+                    </div>
+
+                    <DialogFooter className="mt-6">
+                        <Button
+                            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg"
+                            onClick={handleSubmit}
+                        >
+                            {editing ? "Update Result" : "Add Result"}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+    );
+};

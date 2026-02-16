@@ -1,17 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from "@/components/ui/dialog";
 import api from "@/lib/axios";
 
 interface Result {
     id: number;
     student_id: number;
+    student_name: string;
     course_id: number;
+    course_name: string;
     marks: number;
     grade: string;
 }
@@ -32,9 +45,9 @@ export default function AdminResults() {
     const [courses, setCourses] = useState<Course[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Modal states
     const [open, setOpen] = useState(false);
     const [editing, setEditing] = useState<Result | null>(null);
+
     const [form, setForm] = useState({
         student_id: "",
         course_id: "",
@@ -42,39 +55,37 @@ export default function AdminResults() {
         grade: "",
     });
 
-    const fetchData = async () => {
+    // =============================
+    // FETCH DATA
+    // =============================
+
+    const fetchAll = async () => {
         setLoading(true);
         try {
             const [resultsRes, studentsRes, coursesRes] = await Promise.all([
-                api.get("/admin/results"),
+                api.get("/admin/allResults"),
                 api.get("/admin/students/details"),
                 api.get("/admin/courses"),
             ]);
-            console.log(resultsRes?.data?.count);
-            console.log(studentsRes?.data?.student);
-            console.log(coursesRes?.data?.courses);
 
-            setResults(resultsRes?.data?.count);
+            setResults(resultsRes?.data?.results);
             setStudents(studentsRes?.data?.student);
             setCourses(coursesRes?.data?.courses);
-
-        } catch (err) {
-            console.error(err);
+        } catch (error) {
+            console.error(error);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchData();
+        fetchAll();
     }, []);
 
-    // Handle form change
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
-    };
+    // =============================
+    // MODAL
+    // =============================
 
-    // Open modal for add/edit
     const openModal = (result?: Result) => {
         if (result) {
             setEditing(result);
@@ -86,44 +97,72 @@ export default function AdminResults() {
             });
         } else {
             setEditing(null);
-            setForm({ student_id: "", course_id: "", marks: "", grade: "" });
+            setForm({
+                student_id: "",
+                course_id: "",
+                marks: "",
+                grade: "",
+            });
         }
+
         setOpen(true);
     };
 
-    // Add or Edit result
+    // =============================
+    // SUBMIT
+    // =============================
+
     const handleSubmit = async () => {
         try {
+            const payload = {
+                studentId: Number(form.student_id),
+                courseId: Number(form.course_id),
+                marks: Number(form.marks),
+                grade: form.grade,
+            };
+            console.log(payload);
+
             if (editing) {
-                await api.put(`/admin/results/${editing.id}`, form);
+                await api.put(`/admin/results/${editing.id}`, payload);
             } else {
-                await api.post("/admin/results", form);
+                await api.post("/admin/results", payload);
             }
+
             setOpen(false);
-            fetchData();
+            fetchAll();
         } catch (err: any) {
             alert(err.response?.data?.message || "Error occurred");
         }
     };
 
-    // Delete result
+    // =============================
+    // DELETE
+    // =============================
+
     const handleDelete = async (id: number) => {
         if (!confirm("Are you sure you want to delete this result?")) return;
+
         try {
             await api.delete(`/admin/results/${id}`);
-            fetchData();
-        } catch (err) {
-            console.error(err);
+            fetchAll();
+        } catch (error) {
+            console.error(error);
         }
     };
 
+    // =============================
+    // UI
+    // =============================
+
     return (
         <div className="p-8">
-            <h1 className="text-2xl font-bold mb-4">Manage Results</h1>
+            <div className="flex justify-between">
+                <h1 className="text-2xl font-bold mb-4">Manage Results</h1>
 
-            <Button onClick={() => openModal()} className="mb-4 bg-indigo-600 hover:bg-indigo-700">
-                Add Result
-            </Button>
+                <Button onClick={() => openModal()} className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg mb-4">
+                    Add Result
+                </Button>
+            </div>
 
             {loading ? (
                 <p>Loading...</p>
@@ -146,12 +185,18 @@ export default function AdminResults() {
                                 <td className="px-4 py-2">{result.marks}</td>
                                 <td className="px-4 py-2">{result.grade}</td>
                                 <td className="px-4 py-2">
-                                    <Button size="sm" className="mr-2" onClick={() => openModal(result)}>
-                                        Edit
-                                    </Button>
-                                    <Button size="sm" variant="destructive" onClick={() => handleDelete(result.id)}>
-                                        Delete
-                                    </Button>
+                                    <div className="flex gap-3">
+                                        <Button size="sm" onClick={() => openModal(result)} className="bg-indigo-600 hover:bg-indigo-700 px-3 py-1 rounded text-white mr-2">
+                                            Edit
+                                        </Button>
+                                        <Button
+                                            size="sm"
+                                            variant="destructive"
+                                            onClick={() => handleDelete(result.id)}
+                                        >
+                                            Delete
+                                        </Button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
@@ -159,61 +204,102 @@ export default function AdminResults() {
                 </table>
             )}
 
-            {/* Modal for Add/Edit */}
+            {/* Modal */}
+            {/* Modal */}
             <Dialog open={open} onOpenChange={setOpen}>
-                <DialogContent>
+                <DialogContent className="bg-gray-900 border border-gray-700 text-white rounded-2xl shadow-2xl max-w-md">
                     <DialogHeader>
-                        <DialogTitle>{editing ? "Edit Result" : "Add Result"}</DialogTitle>
+                        <DialogTitle className="text-xl font-semibold">
+                            {editing ? "Edit Result" : "Add Result"}
+                        </DialogTitle>
                     </DialogHeader>
 
-                    <div className="flex flex-col gap-4 mt-4">
-                        <Select value={form.student_id} onValueChange={(val) => setForm({ ...form, student_id: val })}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select Student" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {students.map((s) => (
-                                    <SelectItem key={s.id} value={String(s.id)}>
-                                        {s.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                    <div className="flex flex-col gap-5 mt-4">
 
-                        <Select value={form.course_id} onValueChange={(val) => setForm({ ...form, course_id: val })}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select Course" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {courses.map((c) => (
-                                    <SelectItem key={c.id} value={String(c.id)}>
-                                        {c.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        {/* Student Select */}
+                        <div className="space-y-2">
+                            <label className="text-sm text-gray-400">Student</label>
+                            <Select
+                                value={form.student_id}
+                                onValueChange={(val) =>
+                                    setForm({ ...form, student_id: val })
+                                }
+                            >
+                                <SelectTrigger className="bg-gray-800 border-gray-700 focus:ring-indigo-500">
+                                    <SelectValue placeholder="Select Student" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-gray-900 border-gray-700 text-white">
+                                    {students.map((s) => (
+                                        <SelectItem key={s.id} value={String(s.id)}>
+                                            {s.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                        <Input
-                            type="number"
-                            name="marks"
-                            placeholder="Marks"
-                            value={form.marks}
-                            onChange={handleChange}
-                        />
-                        <Input
-                            type="text"
-                            name="grade"
-                            placeholder="Grade (e.g. A, B+)"
-                            value={form.grade}
-                            onChange={handleChange}
-                        />
+                        {/* Course Select */}
+                        <div className="space-y-2">
+                            <label className="text-sm text-gray-400">Course</label>
+                            <Select
+                                value={form.course_id}
+                                onValueChange={(val) =>
+                                    setForm({ ...form, course_id: val })
+                                }
+                            >
+                                <SelectTrigger className="bg-gray-800 border-gray-700 focus:ring-indigo-500">
+                                    <SelectValue placeholder="Select Course" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-gray-900 border-gray-700 text-white">
+                                    {courses.map((c) => (
+                                        <SelectItem key={c.id} value={String(c.id)}>
+                                            {c.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Marks */}
+                        <div className="space-y-2">
+                            <label className="text-sm text-gray-400">Marks</label>
+                            <Input
+                                type="number"
+                                placeholder="Enter marks"
+                                className="bg-gray-800 border-gray-700 focus-visible:ring-indigo-500"
+                                value={form.marks}
+                                onChange={(e) =>
+                                    setForm({ ...form, marks: e.target.value })
+                                }
+                            />
+                        </div>
+
+                        {/* Grade */}
+                        <div className="space-y-2">
+                            <label className="text-sm text-gray-400">Grade</label>
+                            <Input
+                                type="text"
+                                placeholder="e.g. A, B+"
+                                className="bg-gray-800 border-gray-700 focus-visible:ring-indigo-500"
+                                value={form.grade}
+                                onChange={(e) =>
+                                    setForm({ ...form, grade: e.target.value })
+                                }
+                            />
+                        </div>
                     </div>
 
-                    <DialogFooter>
-                        <Button onClick={handleSubmit}>{editing ? "Update" : "Add"}</Button>
+                    <DialogFooter className="mt-6">
+                        <Button
+                            className="w-full bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg"
+                            onClick={handleSubmit}
+                        >
+                            {editing ? "Update Result" : "Add Result"}
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
         </div>
     );
 }

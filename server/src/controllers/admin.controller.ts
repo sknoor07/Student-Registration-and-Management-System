@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { pool } from "../config/db.ts";
-
+import bcrypt from "bcrypt";
 
 
 // ✅ Create Course (Admin Only)
@@ -139,7 +139,7 @@ export const getAllCourses = async (req: Request, res: Response) => {
 };
 
 // get all results (Admin Only)
-export const getAllResults = async (req: Request, res: Response) => {
+export const getResults = async (req: Request, res: Response) => {
     try {
         const results = await pool.query("SELECT * FROM results");
 
@@ -168,3 +168,216 @@ export const getFullStudentsDetails = async (req: Request, res: Response) => {
         res.status(500).json({ message: "Server error" });
     }
 };
+
+export const getAllResults = async (req: Request, res: Response) => {
+    try {
+        const query = `
+      SELECT 
+        r.id,
+        r.student_id,
+        u.name AS student_name,
+        r.course_id,
+        c.name AS course_name,
+        r.marks,
+        r.grade
+      FROM results r
+      JOIN users u ON r.student_id = u.id
+      JOIN courses c ON r.course_id = c.id
+      ORDER BY r.id DESC
+    `;
+        const result: any = await pool.query(query);
+
+        res.status(200).json({
+            message: "Results fetched successfully",
+            results: result.rows,
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" })
+    }
+}
+
+
+export const updateResult = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { student_id, course_id, marks, grade } = req.body;
+
+        const result = await pool.query(
+            `UPDATE results 
+             SET student_id = $1, course_id = $2, marks = $3, grade = $4
+             WHERE id = $5
+             RETURNING *`,
+            [student_id, course_id, marks, grade, id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "Result not found" });
+        }
+
+        res.json({
+            message: "Result updated successfully",
+            result: result.rows[0],
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+
+export const deleteResult = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+
+        const result = await pool.query(
+            "DELETE FROM results WHERE id = $1 RETURNING *",
+            [id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "Result not found" });
+        }
+
+        res.json({ message: "Result deleted successfully" });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+
+export const updateCourse = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { name, code, credits, department, year } = req.body;
+
+        const result = await pool.query(
+            `UPDATE courses 
+             SET name = $1, code = $2, credits = $3, department = $4, year = $5
+             WHERE id = $6
+             RETURNING *`,
+            [name, code, credits, department, year, id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "Course not found" });
+        }
+
+        res.json({
+            message: "Course updated successfully",
+            course: result.rows[0],
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+
+export const deleteCourse = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+
+        const result = await pool.query(
+            "DELETE FROM courses WHERE id = $1 RETURNING *",
+            [id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "Course not found" });
+        }
+
+        res.json({ message: "Course deleted successfully" });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+export const updateStudent = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+        const { name, email, role } = req.body;
+
+        const result = await pool.query(
+            `UPDATE users 
+             SET name = $1, email = $2, role = $3
+             WHERE id = $4
+             RETURNING *`,
+            [name, email, role, id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "Student not found" });
+        }
+
+        res.json({
+            message: "Student updated successfully",
+            student: result.rows[0],
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+export const deleteStudent = async (req: Request, res: Response) => {
+    try {
+        const { id } = req.params;
+
+        const result = await pool.query(
+            "DELETE FROM users WHERE id = $1 RETURNING *",
+            [id]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "Student not found" });
+        }
+
+        res.json({ message: "Student deleted successfully" });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+export const createStudent = async (req: Request, res: Response) => {
+    try {
+        const { name, email, role } = req.body;
+
+        const existingUser = await pool.query(
+            "SELECT * FROM users WHERE email = $1",
+            [email]
+        );
+        if (existingUser.rows.length > 0) {
+            return res.status(400).json({ message: "User already exists" });
+        }
+        // 2️⃣ Hash password
+        const hashedPassword = await bcrypt.hash("123456", 10);
+
+        // 3️⃣ Insert user into DB
+        const newUser = await pool.query(
+            "INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id, role",
+            [name, email, hashedPassword, role]
+        );
+
+        res.json({
+            message: "Student created successfully",
+            student: newUser.rows[0],
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+
+
