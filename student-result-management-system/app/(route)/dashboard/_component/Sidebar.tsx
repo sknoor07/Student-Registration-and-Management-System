@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 import {
@@ -13,10 +13,17 @@ import {
 } from "lucide-react";
 
 export default function Sidebar() {
-    const [collapsed, setCollapsed] = useState(false);
     const { user } = useAuth();
     const router = useRouter();
     const pathname = usePathname();
+    const [collapsed, setCollapsed] = useState<boolean>(() => {
+        if (typeof window !== "undefined") {
+            return localStorage.getItem("sidebarCollapsed") === "true";
+        }
+        return false;
+    });
+
+
 
     const studentMenu = [
         {
@@ -61,6 +68,10 @@ export default function Sidebar() {
 
     const menu = user?.role === "admin" ? adminMenu : studentMenu;
 
+    useEffect(() => {
+        localStorage.setItem("sidebarCollapsed", String(collapsed));
+    }, [collapsed]);
+
     return (
         <div
             className={`bg-zinc-900 border-r border-zinc-800 h-screen transition-all duration-300 ${collapsed ? "w-20" : "w-64"
@@ -84,8 +95,8 @@ export default function Sidebar() {
                             key={item.path}
                             onClick={() => router.push(item.path)}
                             className={`flex items-center gap-3 px-4 py-2 rounded-lg transition ${isActive
-                                    ? "bg-indigo-600 text-white"
-                                    : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                                ? "bg-indigo-600 text-white"
+                                : "text-zinc-400 hover:bg-zinc-800 hover:text-white"
                                 } ${collapsed ? "justify-center" : ""}`}
                         >
                             <Icon size={18} />

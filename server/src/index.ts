@@ -5,6 +5,9 @@ import cookieParser from "cookie-parser";
 import router from "./routes/auth.routes.ts";
 import { pool } from "./config/db.ts";
 import { authenticate, authorize } from "./middleware/auth.middleware.ts";
+import adminRoutes from "./routes/admin.routes.ts";
+import studentRoutes from "./routes/student.routes.ts";
+
 
 dotenv.config();
 
@@ -65,6 +68,8 @@ app.post("/api/auth/logout", (req, res) => {
 
 
 app.use("/api/auth", router)
+app.use("/api/admin", adminRoutes);
+app.use("/api/student", studentRoutes);
 
 const PORT = process.env.PORT || 5000;
 
