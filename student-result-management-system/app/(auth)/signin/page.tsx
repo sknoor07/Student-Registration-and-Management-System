@@ -2,9 +2,15 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import api from "@/lib/axios";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Signin() {
     const router = useRouter();
+    const { refreshUser } = useAuth();
+    const { signin, user } = useAuth();
+    const [error, setError] = useState<string | null>(null);
+
 
     const [formData, setFormData] = useState({
         email: "",
@@ -21,13 +27,23 @@ export default function Signin() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        console.log("Signin Data:", formData);
+        try {
+            const user = await signin(formData.email, formData.password);
 
-        // Later:
-        // Send to backend → get JWT cookie
+            if (user?.role === "admin") {
+                router.push("/dashboard/admin");
+            } else {
+                router.push("/dashboard/student");
+            }
 
-        router.push("/dashboard/student"); // temporary
-    };
+        } catch (error: any) {
+            const message = error.response?.data?.message;
+            setError(message);
+        }
+        console.error("Login failed");
+    }
+
+
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-black text-white">
@@ -52,6 +68,12 @@ export default function Signin() {
                     className="w-full p-2 rounded bg-zinc-800"
                     onChange={handleChange}
                 />
+
+                {error && (
+                    <p className="text-red-500 text-sm text-center">
+                        {error}
+                    </p>
+                )}
 
                 <button
                     type="submit"

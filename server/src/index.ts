@@ -2,8 +2,9 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
-
+import router from "./routes/auth.routes.ts";
 import { pool } from "./config/db.ts";
+import { authenticate, authorize } from "./middleware/auth.middleware.ts";
 
 dotenv.config();
 
@@ -27,6 +28,41 @@ app.use(cookieParser());
 app.get("/", (req, res) => {
     res.send("SRMS API Running");
 });
+
+app.get(
+    "/api/admin/test",
+    authenticate,
+    authorize(["admin"]),
+    (req, res) => {
+        res.json({ message: "Welcome Admin" });
+    }
+);
+app.get(
+    "/api/student/test",
+    authenticate,
+    authorize(["student"]),
+    (req, res) => {
+        res.json({ message: "Welcome Student" });
+    }
+);
+
+app.get(
+    "/api/auth/me",
+    authenticate,
+    (req: any, res) => {
+        res.json({
+            id: req.user.id,
+            role: req.user.role,
+        });
+    }
+);
+app.post("/api/auth/logout", (req, res) => {
+    res.clearCookie("token");
+    res.json({ message: "Logged out" });
+});
+
+
+app.use("/api/auth", router)
 
 const PORT = process.env.PORT || 5000;
 

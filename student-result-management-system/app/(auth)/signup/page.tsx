@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import api from "@/lib/axios";
 
 export default function SignupPage() {
     const router = useRouter();
@@ -28,11 +29,7 @@ export default function SignupPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        console.log("Signup Data:", formData);
-
-        // 🚦 Later this will call Express
-        // await fetch("http://localhost:5000/api/auth/signup", {...})
-
+        await api.post("/auth/signup", formData);
         router.push("/signin");
     };
 
