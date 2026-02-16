@@ -11,4 +11,14 @@ router.get(
     getMyCourses
 );
 
+import { getMyResults } from "../controllers/student.controller.ts";
+
+router.get(
+    "/results",
+    authenticate,
+    authorize(["student"]),
+    getMyResults
+);
+
+
 export default router;

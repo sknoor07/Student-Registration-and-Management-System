@@ -22,3 +22,12 @@ router.post(
     authorize(["admin"]),
     createStudentProfile
 );
+
+import { addResult } from "../controllers/admin.controller.ts";
+
+router.post(
+    "/results",
+    authenticate,
+    authorize(["admin"]),
+    addResult
+);

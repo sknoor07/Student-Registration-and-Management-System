@@ -43,3 +43,37 @@ export const getMyCourses = async (
         res.status(500).json({ message: "Server error" });
     }
 };
+
+// ✅ Get Logged-in Student Results
+export const getMyResults = async (
+    req: AuthRequest,
+    res: Response
+) => {
+    try {
+        const userId = req.user.id;
+
+        const results = await pool.query(
+            `
+      SELECT 
+        r.id,
+        r.marks,
+        r.grade,
+        c.name AS course_name,
+        c.code AS course_code,
+        c.credits
+      FROM results r
+      JOIN courses c ON r.course_id = c.id
+      WHERE r.student_id = $1
+      `,
+            [userId]
+        );
+
+        res.status(200).json({
+            results: results.rows,
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
