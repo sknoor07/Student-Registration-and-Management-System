@@ -1,6 +1,8 @@
 import type { Request, Response } from "express";
 import { pool } from "../config/db.ts";
 
+
+
 // ✅ Create Course (Admin Only)
 export const createCourse = async (req: Request, res: Response) => {
     try {
@@ -99,6 +101,68 @@ export const addResult = async (req: Request, res: Response) => {
             result: result.rows[0],
         });
 
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+
+// get all students (Admin Only)
+export const getAllStudents = async (req: Request, res: Response) => {
+    try {
+        const students = await pool.query("SELECT * FROM users WHERE role = 'student'");
+
+        res.status(200).json({
+            message: "Students fetched successfully",
+            count: students?.rows,
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+// get all courses (Admin Only)
+export const getAllCourses = async (req: Request, res: Response) => {
+    try {
+        const courses = await pool.query("SELECT * FROM courses");
+
+        res.status(200).json({
+            message: "Courses fetched successfully",
+            courses: courses?.rows,
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+// get all results (Admin Only)
+export const getAllResults = async (req: Request, res: Response) => {
+    try {
+        const results = await pool.query("SELECT * FROM results");
+
+        res.status(200).json({
+            message: "Results fetched successfully",
+            count: results?.rows,
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+// get all results (Admin Only)
+export const getFullStudentsDetails = async (req: Request, res: Response) => {
+    try {
+        const results = await pool.query("SELECT * FROM users WHERE role = 'student' ");
+        console.log("All students: " + results);
+
+        res.status(200).json({
+            message: "Results fetched successfully",
+            student: results?.rows,
+        });
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: "Server error" });

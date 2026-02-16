@@ -1,6 +1,7 @@
 import express from "express";
 import { getMyCourses } from "../controllers/student.controller.ts";
 import { authenticate, authorize } from "../middleware/auth.middleware.ts";
+import { getMyResults } from "../controllers/student.controller.ts";
 
 const router = express.Router();
 
@@ -11,7 +12,7 @@ router.get(
     getMyCourses
 );
 
-import { getMyResults } from "../controllers/student.controller.ts";
+
 
 router.get(
     "/results",
@@ -19,6 +20,8 @@ router.get(
     authorize(["student"]),
     getMyResults
 );
+
+
 
 
 export default router;

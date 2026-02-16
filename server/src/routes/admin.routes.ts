@@ -1,5 +1,5 @@
 import express from "express";
-import { createCourse } from "../controllers/admin.controller.ts";
+import { createCourse, getAllCourses, getAllResults, getAllStudents, getFullStudentsDetails } from "../controllers/admin.controller.ts";
 import { authenticate, authorize } from "../middleware/auth.middleware.ts";
 
 const router = express.Router();
@@ -31,3 +31,31 @@ router.post(
     authorize(["admin"]),
     addResult
 );
+
+
+
+
+router.get(
+    "/results",
+    authenticate,
+    authorize(["admin"]),
+    getAllResults
+);
+router.get(
+    "/courses",
+    authenticate,
+    authorize(["admin"]),
+    getAllCourses
+);
+
+
+
+router.get(
+    "/students/details",
+    authenticate,
+    authorize(["admin"]),
+    getFullStudentsDetails
+);
+
+
+
