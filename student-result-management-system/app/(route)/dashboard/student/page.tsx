@@ -13,7 +13,7 @@ interface Stats {
 }
 
 export default function StudentDashboard() {
-    const { name } = useAuth();
+    const { user } = useAuth();
     const router = useRouter();
     const [stats, setStats] = useState<Stats>({
         totalCourses: 0,
@@ -76,7 +76,7 @@ export default function StudentDashboard() {
 
     return (
         <div className="p-8 space-y-6">
-            <h1 className="text-3xl font-bold">Welcome, {name}</h1>
+            <h1 className="text-3xl font-bold">Welcome, {user?.name}</h1>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <Card>

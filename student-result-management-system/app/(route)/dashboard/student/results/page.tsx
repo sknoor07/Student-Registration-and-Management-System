@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import axios from "axios";
+import api from "@/lib/axios";
 
 interface Result {
     id: number;
@@ -20,8 +21,8 @@ export default function StudentResults() {
     useEffect(() => {
         const fetchResults = async () => {
             try {
-                const res = await axios.get(
-                    "http://localhost:5000/api/student/results",
+                const res = await api.get(
+                    "student/results",
                     { withCredentials: true }
                 );
 

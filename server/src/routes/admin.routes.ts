@@ -1,5 +1,5 @@
 import express from "express";
-import { createCourse, createStudent, deleteCourse, deleteStudent, getAllCourses, getAllResults, getAllStudents, getFullStudentsDetails, getResults, updateCourse, updateStudent } from "../controllers/admin.controller.ts";
+import { assignCourses, createCourse, createStudent, deleteCourse, deleteStudent, getAllCourses, getAllResults, getAllStudents, getFullStudentsDetails, getResults, getStudentEnrollments, getStudentProfiles, getStudentsWithoutProfile, removeEnrollment, updateCourse, updateStudent } from "../controllers/admin.controller.ts";
 import { authenticate, authorize } from "../middleware/auth.middleware.ts";
 
 const router = express.Router();
@@ -126,3 +126,52 @@ router.get(
 
 
 
+// ================= ENROLLMENTS =================
+
+// Assign courses to student
+router.post(
+    "/enrollments",
+    authenticate,
+    authorize(["admin"]),
+    assignCourses
+);
+
+// Get assigned & available courses
+router.get(
+    "/enrollments/:studentProfileId",
+    authenticate,
+    authorize(["admin"]),
+    getStudentEnrollments
+);
+
+// Remove course from enrollment
+router.delete(
+    "/enrollments",
+    authenticate,
+    authorize(["admin"]),
+    removeEnrollment
+);
+
+
+
+//stduent profile routes
+router.get(
+    "/students/without-profile",
+    authenticate,
+    authorize(["admin"]),
+    getStudentsWithoutProfile
+);
+
+router.post(
+    "/student-profile",
+    authenticate,
+    authorize(["admin"]),
+    createStudentProfile
+);
+
+router.get(
+    "/student-profiles",
+    authenticate,
+    authorize(["admin"]),
+    getStudentProfiles
+);

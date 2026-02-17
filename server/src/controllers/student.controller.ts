@@ -13,9 +13,9 @@ export const getMyCourses = async (
     try {
         const userId = req.user.id;
 
-        // 1️⃣ Get student profile
+        // 1️⃣ Get student profile ID
         const profileResult = await pool.query(
-            "SELECT department, year FROM student_profiles WHERE user_id = $1",
+            "SELECT id FROM student_profiles WHERE user_id = $1",
             [userId]
         );
 
@@ -25,13 +25,17 @@ export const getMyCourses = async (
             });
         }
 
-        const { department, year } = profileResult.rows[0];
+        const studentProfileId = profileResult.rows[0].id;
 
-        // 2️⃣ Fetch matching courses
+        // 2️⃣ Fetch courses from enrollments
         const coursesResult = await pool.query(
-            `SELECT * FROM courses 
-       WHERE department = $1 AND year = $2`,
-            [department, year]
+            `
+      SELECT c.*
+      FROM enrollments e
+      JOIN courses c ON e.course_id = c.id
+      WHERE e.student_profile_id = $1
+      `,
+            [studentProfileId]
         );
 
         res.status(200).json({
@@ -43,6 +47,7 @@ export const getMyCourses = async (
         res.status(500).json({ message: "Server error" });
     }
 };
+
 
 // ✅ Get Logged-in Student Results
 export const getMyResults = async (

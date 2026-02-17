@@ -10,6 +10,8 @@ import {
     FileText,
     Users,
     GraduationCap,
+    UserRoundPlus,
+    UserPen,
 } from "lucide-react";
 
 export default function Sidebar() {
@@ -41,6 +43,7 @@ export default function Sidebar() {
             path: "/dashboard/student/subjects",
             icon: BookOpen,
         },
+
     ];
 
     const adminMenu = [
@@ -63,6 +66,16 @@ export default function Sidebar() {
             name: "Manage Results",
             path: "/dashboard/admin/results",
             icon: GraduationCap,
+        },
+        {
+            name: "Enrollments",
+            path: "/dashboard/admin/enrollments",
+            icon: UserRoundPlus,
+        },
+        {
+            name: "Student Profile",
+            path: "/dashboard/admin/student-profile",
+            icon: UserPen,
         },
     ];
 

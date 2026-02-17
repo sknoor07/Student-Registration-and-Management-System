@@ -35,6 +35,7 @@ export const createCourse = async (req: Request, res: Response) => {
 export const createStudentProfile = async (req: Request, res: Response) => {
     try {
         const { userId, rollNumber, department, year } = req.body;
+        console.log("Profile: " + req.body);
 
         if (!userId || !rollNumber || !department || !year) {
             return res.status(400).json({ message: "All fields are required" });
@@ -381,3 +382,205 @@ export const createStudent = async (req: Request, res: Response) => {
 
 
 
+
+// ================= ENROLLMENTS =================
+
+export const assignCourses = async (req: Request, res: Response) => {
+    try {
+        const { studentProfileId, courseIds } = req.body;
+        // studentProfileId here is actually users.id from frontend
+
+        if (!studentProfileId || !courseIds || !Array.isArray(courseIds) || courseIds.length === 0) {
+            return res.status(400).json({
+                message: "Invalid student or courses data",
+            });
+        }
+
+        // ✅ 1️⃣ Convert user_id → student_profile.id
+        const profileRes = await pool.query(
+            `SELECT id FROM student_profiles WHERE user_id = $1`,
+            [studentProfileId]
+        );
+
+        if (profileRes.rows.length === 0) {
+            return res.status(404).json({
+                message: "Student profile not found",
+            });
+        }
+
+        const profileId = profileRes.rows[0].id;
+
+        // ✅ 2️⃣ Insert courses safely (avoid duplicates)
+        for (const courseId of courseIds) {
+            await pool.query(
+                `INSERT INTO enrollments (student_profile_id, course_id)
+                 VALUES ($1, $2)
+                 ON CONFLICT (student_profile_id, course_id) DO NOTHING`,
+                [profileId, courseId]
+            );
+        }
+
+        return res.status(201).json({
+            message: "Courses assigned successfully",
+        });
+
+    } catch (error) {
+        console.error("Assign Courses Error:", error);
+        return res.status(500).json({
+            message: "Server error",
+        });
+    }
+};
+
+
+export const getStudentEnrollments = async (req: Request, res: Response) => {
+    try {
+        const { studentProfileId } = req.params; // user.id
+        const { year } = req.query;
+
+        if (!studentProfileId || !year) {
+            return res.status(400).json({ message: "Missing student or year" });
+        }
+
+        // 1️⃣ Convert user_id → profile_id
+        const profileRes = await pool.query(
+            `SELECT id, department 
+             FROM student_profiles 
+             WHERE user_id = $1`,
+            [studentProfileId]
+        );
+
+        if (profileRes.rows.length === 0) {
+            return res.status(404).json({ message: "Student profile not found" });
+        }
+
+        const profileId = profileRes.rows[0].id;
+        const department = profileRes.rows[0].department;
+
+        // 2️⃣ Assigned courses (FILTER BY YEAR)
+        const assigned = await pool.query(
+            `SELECT c.*
+             FROM enrollments e
+             JOIN courses c ON e.course_id = c.id
+             WHERE e.student_profile_id = $1
+             AND c.year = $2`,
+            [profileId, year]
+        );
+
+        // 3️⃣ Available courses
+        const available = await pool.query(
+            `SELECT *
+             FROM courses
+             WHERE department = $1
+             AND year = $2
+             AND id NOT IN (
+                 SELECT e.course_id
+                 FROM enrollments e
+                 WHERE e.student_profile_id = $3
+             )`,
+            [department, year, profileId]
+        );
+
+        res.status(200).json({
+            assignedCourses: assigned.rows,
+            availableCourses: available.rows,
+        });
+
+    } catch (error) {
+        console.error("Get Enrollments Error:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+
+export const removeEnrollment = async (req: Request, res: Response) => {
+    try {
+        const { studentProfileId, courseId } = req.body;
+
+        if (!studentProfileId || !courseId) {
+            return res.status(400).json({ message: "Missing data" });
+        }
+
+        // Convert user_id → profile_id
+        const profileRes = await pool.query(
+            `SELECT id FROM student_profiles WHERE user_id = $1`,
+            [studentProfileId]
+        );
+
+        if (profileRes.rows.length === 0) {
+            return res.status(404).json({ message: "Student profile not found" });
+        }
+
+        const profileId = profileRes.rows[0].id;
+
+        await pool.query(
+            `DELETE FROM enrollments
+             WHERE student_profile_id = $1
+             AND course_id = $2`,
+            [profileId, courseId]
+        );
+
+        res.json({ message: "Course removed successfully" });
+
+    } catch (error) {
+        console.error("Remove Enrollment Error:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+
+
+
+///-----Student profile-----
+export const getStudentsWithoutProfile = async (
+    req: Request,
+    res: Response
+) => {
+    try {
+        const result = await pool.query(`
+      SELECT u.id, u.name, u.email
+      FROM users u
+      WHERE u.role = 'student'
+      AND NOT EXISTS (
+        SELECT 1 FROM student_profiles sp
+        WHERE sp.user_id = u.id
+      )
+    `);
+
+        res.status(200).json({
+            students: result.rows,
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+
+
+export const getStudentProfiles = async (
+    req: Request,
+    res: Response
+) => {
+    try {
+        const result = await pool.query(`
+      SELECT 
+        sp.id,
+        sp.roll_number,
+        sp.department,
+        sp.year,
+        u.name,
+        u.email
+      FROM student_profiles sp
+      JOIN users u ON sp.user_id = u.id
+    `);
+
+        res.status(200).json({
+            profiles: result.rows,
+        });
+
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
